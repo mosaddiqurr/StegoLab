@@ -4,7 +4,7 @@
 
 Hide and recover data inside images and PDFs. Everything is processed in your browser.
 
-[![Live Demo — Open StegoLab](https://img.shields.io/badge/Live_Demo-Open_StegoLab-111418?style=for-the-badge&labelColor=d6a43a)](https://stegolabsec.netlify.app/)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-d6a43a?style=for-the-badge)](https://stegolabsec.netlify.app/)
 
 ## Overview
 

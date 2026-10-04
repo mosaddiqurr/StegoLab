@@ -17,7 +17,7 @@ Validated on 2026-10-04 with Node.js 24.15.0, npm 11.12.1 and Playwright 1.62.1.
 | `npm.cmd ls --prefix frontend --omit=dev --all` | Runtime dependency tree resolved without errors. |
 | `npm.cmd test --prefix e2e -- --reporter=line` | 36 tests passed in 2.2 minutes. |
 | `npm.cmd test --prefix e2e -- --reporter=line --grep 'Home, navigation\|mobile Home'` | 2 desktop/mobile navigation and layout tests passed after logo metadata cleanup. |
-| `git diff --check -- README.md docs/VALIDATION.md` | Passed after the README live-demo button update on 2026-10-05. |
+| `git diff --check -- README.md docs/VALIDATION.md` | Passed after simplifying the README button to a single Live Demo label on 2026-10-05. |
 
 On other platforms, use `npm` in place of `npm.cmd`. Both lockfiles remained unchanged after installation.
 
