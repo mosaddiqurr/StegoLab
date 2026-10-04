@@ -4,6 +4,8 @@
 
 Hide and recover data inside images and PDFs. Everything is processed in your browser.
 
+[![Live Demo — Open StegoLab](https://img.shields.io/badge/Live_Demo-Open_StegoLab-111418?style=for-the-badge&labelColor=d6a43a)](https://stegolabsec.netlify.app/)
+
 ## Overview
 
 StegoLab keeps the workflow small: choose **Embed** to hide text or a file, or **Extract** to recover it. Optional password protection encrypts the payload before it enters the carrier. No account or installation is needed to use a deployed site.
@@ -95,7 +97,7 @@ Deploy the contents of `frontend/dist/`. The deployed app requires only static h
 
 **GitHub Pages:** select **GitHub Actions** under repository Settings → Pages, then run the included **Deploy static site to GitHub Pages** workflow manually. Vite uses relative asset paths, and routes use `#/embed` and `#/extract`, so the same build works under a repository subpath.
 
-The setup follows [Netlify's static SPA guidance](https://docs.netlify.com/build/configure-builds/javascript-spas/) and [GitHub's Pages workflow guidance](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages). No public deployment URL is claimed.
+The setup follows [Netlify's static SPA guidance](https://docs.netlify.com/build/configure-builds/javascript-spas/) and [GitHub's Pages workflow guidance](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 
 ## Project structure
 
