@@ -1,0 +1,27 @@
+name: StegoLab CI
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --prefix frontend
+      - run: npm run lint --prefix frontend
+      - run: npm run typecheck --prefix frontend
+      - run: npm test --prefix frontend
+      - run: npm run build --prefix frontend
+      - run: npm audit --prefix frontend
+      - run: npm ci --prefix e2e
+      - run: node e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - run: npm test --prefix e2e
+      - run: npm audit --prefix e2e
+

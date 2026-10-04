@@ -1,0 +1,10 @@
+{
+  "name": "stegolab-e2e",
+  "description": "Synthetic production-browser acceptance tests for StegoLab.",
+  "license": "MIT",
+  "private": true,
+  "type": "module",
+  "scripts": { "test": "node run.mjs" },
+  "devDependencies": { "@playwright/test": "1.62.1" },
+  "engines": { "node": ">=22.12.0 <25" }
+}

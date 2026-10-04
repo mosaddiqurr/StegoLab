@@ -1,0 +1,31 @@
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.env
+.env.*
+*.log
+.npm-cache/
+.cache/
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+playwright-report/
+test-results/
+e2e/.fixtures/
+uploads/
+outputs/
+recovered/
+stegolab-image.*
+stegolab-document.pdf
+*.db
+*.db-*
+*.sqlite*
+*.zip
+# Internal planning and release notes stay local.
+docs/EXECUTION_PLAN.md
+docs/BUILD_STATUS.md
+docs/FINAL_RELEASE_REPORT.md
+# Only source and the intentional screenshots in docs/screenshots are public.
+
