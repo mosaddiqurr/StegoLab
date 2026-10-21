@@ -9,6 +9,7 @@ export const test = base.extend<{ privacyGuard: void }>({
     const unexpected: string[] = [], errors: string[] = [];
     page.on("request", request => { const url = new URL(request.url()); if (!["blob:","data:"].includes(url.protocol) && (url.origin !== new URL(baseURL!).origin || !["GET","HEAD"].includes(request.method()) || /\/api\//.test(url.pathname))) unexpected.push(request.method() + " " + url.pathname); });
     page.on("pageerror",error=>errors.push(error.message));
+    page.on("console",message=>{ if (message.type()==="error" && /Content Security Policy/i.test(message.text())) errors.push("CSP violation: "+message.text().slice(0,160)); });
     await use(); expect(unexpected, "No network upload or API request").toEqual([]); expect(errors, "No browser errors").toEqual([]);
   }, { auto: true }],
 });
