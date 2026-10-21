@@ -87,7 +87,8 @@ export async function inspectPayload(container: Uint8Array): Promise<{ encrypted
   if (container[5] > 1 || view.getUint16(6) !== 0 || view.getUint32(8) !== container.length - HEADER - CHECKSUM) fail(DAMAGED);
   if (view.getUint32(12) !== (encrypted ? KDF_ITERATIONS : 0)) fail(DAMAGED);
   if (!encrypted && container.subarray(16, HEADER).some(b => b !== 0)) fail(DAMAGED);
-  if (!equal(await hash(container.subarray(0, -CHECKSUM)), container.subarray(-CHECKSUM))) fail(encrypted ? AUTH_FAILED : DAMAGED);
+  // The outer checksum is unauthenticated, so a mismatch means damage regardless of encryption. Passwords are checked later by AES-GCM.
+  if (!equal(await hash(container.subarray(0, -CHECKSUM)), container.subarray(-CHECKSUM))) fail(DAMAGED);
   return { encrypted };
 }
 

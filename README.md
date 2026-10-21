@@ -8,31 +8,37 @@ Hide and recover data inside images and PDFs. Everything is processed in your br
 
 ## Overview
 
-StegoLab keeps the workflow small: choose **Embed** to hide text or a file, or **Extract** to recover it. Optional password protection encrypts the payload before it enters the carrier. No account or installation is needed to use a deployed site.
+StegoLab keeps the workflow small: choose **Embed** to hide text or a file, or **Extract** to recover it. **Inspect** shows any image one bit plane at a time, so you can see what pixel embedding looks like to an analyst. Optional password protection encrypts the payload before it enters the carrier. No account or installation is needed to use a deployed site.
 
 ## Features
 
 - Embed text or arbitrary small files in supported images and PDFs.
 - Recover exact text, or download a recovered file with its original name.
 - Protect payloads with a password and authenticated encryption.
-- Check capacity automatically and verify saved output before offering a download.
+- Check capacity automatically, preview the carrier, and verify saved output before offering a download.
+- Compare the lowest bit plane before and after embedding, with an exact count of changed colour values.
+- Inspect any image by channel and bit plane, and detect StegoLab payloads.
+- Reveal passwords while typing, see a strength hint, and copy recovered text in one click.
+- Light and dark themes that follow your system setting.
 - Process files in the browser, with no upload or persistent operation records.
 
 ## Screenshots
 
 ![StegoLab Home](docs/screenshots/home.png)
 
-| Embed | Extract |
-|---|---|
-| [![Embed](docs/screenshots/embed.png)](docs/screenshots/embed.png) | [![Extract](docs/screenshots/extract.png)](docs/screenshots/extract.png) |
+| Embed | Extract | Inspect |
+|---|---|---|
+| [![Embed](docs/screenshots/embed.png)](docs/screenshots/embed.png) | [![Extract](docs/screenshots/extract.png)](docs/screenshots/extract.png) | [![Inspect](docs/screenshots/inspect.png)](docs/screenshots/inspect.png) |
 
-These are actual production UI captures. [Mobile form](docs/screenshots/mobile-embed.png).
+These are actual production UI captures made with synthetic files. [Mobile form](docs/screenshots/mobile-embed.png).
 
 ## How it works
 
 **Embed:** select carrier → package text/file → encrypt if requested → embed → verify saved output → download.
 
 **Extract:** upload generated carrier → discover payload → decrypt if required → verify integrity → display text or download file.
+
+**Inspect:** decode any image locally → render a chosen channel and bit plane → report whether a StegoLab payload is present.
 
 ## Supported formats
 

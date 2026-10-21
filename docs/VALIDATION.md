@@ -40,3 +40,18 @@ Git's ignore matching was checked using a temporary isolated metadata directory,
 `node e2e/node_modules/@playwright/test/cli.js install chromium` stalled without output and was interrupted. The matching Chromium v1234 browser was already cached; `install --dry-run chromium` confirmed its path, and the complete browser suite and additional probe ran successfully with it. A fresh browser download was not verified.
 
 Hosted CI, public hosting, remote-repository state, Firefox/WebKit and physical devices were not validated. Browser emulation and local acceptance do not establish those results. Browser decoders and pdf-lib remain parser trust boundaries; page/object limits are checked after PDF parsing and do not bound every parser allocation. The security notes and README describe the remaining format, privacy and transformation limitations.
+
+## Redesign and fixes, 2026-10-22
+
+Validated with Node.js 24.15.0 and Playwright 1.62.1 against the production build.
+
+| Executed command | Result |
+|---|---|
+| `npm audit fix` and `vite` 8.3.5 in `frontend` | Cleared the source-map-js and launch-editor advisories; `npm audit` reports zero vulnerabilities. |
+| `npm run lint --prefix frontend` | Passed. |
+| `npm run typecheck --prefix frontend` | Passed. |
+| `npm test --prefix frontend` | 5 files, 20 tests passed, including new regressions for JPEG trailing bytes, BMP zero file-size headers, damaged encrypted payloads and the password-strength hint. |
+| `npm run build --prefix frontend` | Passed. |
+| `npm test --prefix e2e` | 36 tests passed in 2.5 minutes, including all formats, the no-network privacy guard and mobile overflow checks. |
+
+README screenshots were recaptured from the production preview with synthetic fixtures. Light and dark themes were reviewed at 1440×900 and 390×844.

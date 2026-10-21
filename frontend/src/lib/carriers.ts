@@ -5,7 +5,7 @@ import { MAX_CONTAINER, MAX_PAYLOAD, equal, inspectPayload, packPayload, packedS
 export const MAX_CARRIER = 40 * 1024 * 1024;
 export const ACCEPT_CARRIERS = ".png,.jpg,.jpeg,.bmp,.webp,.pdf,image/png,image/jpeg,image/bmp,image/webp,application/pdf";
 export type CarrierFormat = ImageFormat | "PDF";
-export interface Carrier { bytes: Uint8Array; name: string; format: CarrierFormat; capacity: number; pixels?: ImageData }
+export interface Carrier { bytes: Uint8Array; name: string; format: CarrierFormat; capacity: number; pixels?: ImageData; width?: number; height?: number; pages?: number }
 export interface Output { bytes: Uint8Array; filename: string; mime: string }
 export const FORMAT_DETAILS: Record<CarrierFormat, string> = {
   PNG: "PNG output · one bit per RGB channel in fully opaque pixels. Keep the downloaded image unchanged; resizing or editing can remove its data.",
@@ -22,17 +22,22 @@ export async function prepareCarrier(file: File): Promise<Carrier> {
   const pdf = new TextDecoder().decode(bytes.subarray(0, 5)) === "%PDF-";
   const format = pdf ? "PDF" : detectImage(bytes);
   if (!format) fail("Unsupported file format.");
-  let capacity = MAX_CONTAINER, pixels: ImageData | undefined;
-  if (format === "PNG") { pixels = await decodePixels(bytes, format); capacity = pixelCapacity(opaqueSlots(pixels)); }
-  else if (format === "BMP") { const layout = bmpLayout(bytes); capacity = pixelCapacity(layout.width * layout.height * 3); }
-  else if (format === "PDF") { const { openPdf } = await import("./pdf"); await openPdf(bytes); }
-  else await decodePixels(bytes, format);
-  return { bytes, name: file.name, format, capacity, pixels };
+  let capacity = MAX_CONTAINER, pixels: ImageData | undefined, width: number | undefined, height: number | undefined, pages: number | undefined;
+  if (format === "PNG") { pixels = await decodePixels(bytes, format); capacity = pixelCapacity(opaqueSlots(pixels)); ({ width, height } = pixels); }
+  else if (format === "BMP") { const layout = bmpLayout(bytes); capacity = pixelCapacity(layout.width * layout.height * 3); ({ width, height } = layout); }
+  else if (format === "PDF") { const { openPdf } = await import("./pdf"); pages = (await openPdf(bytes)).getPageCount(); }
+  else ({ width, height } = await decodePixels(bytes, format));
+  return { bytes, name: file.name, format, capacity, pixels, width, height, pages };
 }
 
 export function availableBytes(carrier: Carrier, filename: string, mime: string, encrypted: boolean): number {
   return Math.max(0, Math.min(MAX_PAYLOAD, carrier.capacity - packedSize(0, filename, mime, encrypted)));
 }
+/** True when even an empty payload cannot fit, e.g. a PNG whose pixels are all translucent. */
+export function hasNoCapacity(carrier: Carrier): boolean { return carrier.capacity < packedSize(0, "message.txt", "text/plain", false); }
+/** Pixel formats store data in the image itself; the others use a container segment and leave pixels untouched. */
+export const PIXEL_FORMATS: readonly CarrierFormat[] = ["PNG", "BMP"];
+export const METHOD: Record<CarrierFormat, string> = { PNG: "Least-significant bit", BMP: "Least-significant bit", JPEG: "APP15 segments", WebP: "RIFF chunk", PDF: "Embedded file stream" };
 export async function readContainer(carrier: Carrier): Promise<Uint8Array> {
   switch (carrier.format) {
     case "PNG": return extractPng(carrier.pixels!);
