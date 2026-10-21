@@ -1,6 +1,6 @@
 # StegoLab development guide
 
-StegoLab is a static browser application. Product pages are Home, Embed, Extract and About. The source lives in frontend/; synthetic browser acceptance tests in e2e/.
+StegoLab is a static browser application. Product pages are Home, Embed, Extract, Inspect and About. The source lives in frontend/; synthetic browser acceptance tests in e2e/.
 
 ## Commands
 
@@ -20,7 +20,7 @@ Run the narrowest meaningful test after a change, then the affected suite. Recor
 
 ## UI
 
-Preserve the existing logo, graphite navigation, ivory surfaces, restrained gold accent, local Manrope typography, visible focus and reduced-motion support. Keep workflows simple; put technical explanations behind Format details or in About. Support desktop, tablet and mobile without horizontal overflow.
+Preserve the existing logo, graphite top navigation, ivory surfaces (with a matching dark theme from prefers-color-scheme), the single gold accent, local Manrope with JetBrains Mono for technical values, Phosphor icons, visible focus and reduced-motion support. Radii are 8px for controls and 14px for panels. Show the real mechanism (bit planes computed with the shared lib) rather than decorative imagery. Keep workflows simple; put technical explanations behind Format details or in About. Support desktop, tablet and mobile without horizontal overflow.
 
 ## Definition of done
 

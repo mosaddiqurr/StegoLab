@@ -13,7 +13,7 @@ test("production has no application service, database or upload endpoint", async
 });
 
 test("Home, navigation, current screenshots, refresh and project subpath", async ({ page }, info) => {
-  await page.goto("/"); await expect(page.getByRole("heading",{name:"StegoLab",exact:true})).toBeVisible();
+  await page.goto("/"); await expect(page.getByRole("heading",{name:"Hide data in plain sight.",exact:true})).toBeVisible();
   await expect(page.getByRole("navigation",{name:"Primary"}).getByRole("link")).toHaveCount(3);
   await capture(page,info,"home");
   for (const [route,title] of [["embed","Embed data"],["extract","Extract data"],["about","StegoLab"]]) {
@@ -51,10 +51,10 @@ test("rejects oversized payload, unsupported carrier and missing payload", async
   await page.getByLabel("Carrier",{exact:true}).setInputFiles({name:"unsupported.txt",mimeType:"text/plain",buffer:Buffer.from("synthetic carrier")});await expect(page.getByRole("alert")).toHaveText("Unsupported file format.");
   await page.goto("/#/extract");await page.getByLabel("StegoLab file").setInputFiles(fixture("clean.png"));await expect(page.getByRole("alert")).toHaveText("No StegoLab payload was found.");await expect(page.getByRole("button",{name:"Extract data",exact:true})).toBeDisabled();
 });
-test("corrupted encrypted payload is rejected during discovery", async ({ page },info) => {
+test("corrupted encrypted payload is reported as damaged during discovery", async ({ page },info) => {
   const output=await embed(page,info,"jpg",true);const bytes=await fs.readFile(output);const start=bytes.indexOf("SLP2");expect(start).toBeGreaterThan(0);bytes[start+48]^=1;
   await page.goto("/#/extract");await page.getByLabel("StegoLab file").setInputFiles({name:"modified.jpg",mimeType:"image/jpeg",buffer:bytes});
-  await expect(page.getByRole("alert")).toHaveText("The password is incorrect or the hidden data is damaged.");await expect(page.locator(".recovered-text")).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveText("The file appears to be damaged.");await expect(page.locator(".recovered-text")).toHaveCount(0);
 });
 test("large JPEG payload survives multiple application segments", async ({ page },info) => {
   const output=await embed(page,info,"jpg",true,true,"large.bin");await recover(page,output,true,true);await verifyBinary(page,"large.bin");

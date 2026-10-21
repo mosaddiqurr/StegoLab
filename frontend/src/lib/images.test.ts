@@ -17,6 +17,15 @@ describe("format-specific framing", () => {
     expect(() => extractBmp(data)).toThrow("No StegoLab");
     const odd = bmp(65, 64); expect(extractBmp(embedBmp(odd, new Uint8Array([1,2,3])))).toEqual(new Uint8Array([1,2,3]));
   });
+  it("accepts a BMP whose header file-size field is zero or stale", () => {
+    const data = bmp(); new DataView(data.buffer).setUint32(2, 0, true);
+    expect(extractBmp(embedBmp(data, new Uint8Array([7, 8, 9])))).toEqual(new Uint8Array([7, 8, 9]));
+  });
+  it("accepts JPEGs with bytes after the end-of-image marker and keeps them", () => {
+    const jpeg = new Uint8Array([255,216,255,224,0,4,11,12,255,192,0,8,8,0,64,0,64,1,255,218,0,2,0,255,217,1,2,3,4]);
+    const out = embedJpeg(jpeg, new Uint8Array([5, 6]));
+    expect(extractJpeg(out)).toEqual(new Uint8Array([5, 6])); expect(Array.from(out.slice(-4))).toEqual([1, 2, 3, 4]);
+  });
   it("rejects invalid BMP dimensions, truncated pixels and compressed variants", () => {
     const data = bmp(); expect(() => bmpLayout(data.subarray(0,-1))).toThrow();
     new DataView(data.buffer).setUint32(30,1,true); expect(() => bmpLayout(data)).toThrow("uncompressed");

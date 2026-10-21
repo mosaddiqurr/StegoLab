@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router-dom";
 import App from "./App";
 import "@fontsource-variable/manrope";
+import "@fontsource-variable/jetbrains-mono";
 import "./styles.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

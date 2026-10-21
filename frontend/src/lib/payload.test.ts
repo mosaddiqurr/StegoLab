@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { describe, expect, it } from "vitest";
-import { AUTH_FAILED } from "./errors";
+import { AUTH_FAILED, DAMAGED } from "./errors";
 import { MAX_PAYLOAD, concat, hash, inspectPayload, packPayload, packedSize, safeFilename, unpackPayload } from "./payload";
 
 const text = { type: "text" as const, data: new TextEncoder().encode("Exact text: café · বাংলা · 🔒\nsecond line"), filename: "message.txt", mime: "text/plain" };
@@ -25,6 +25,10 @@ describe("versioned payload", () => {
     const data = await packPayload(text, "Synthetic test password"); data[32] ^= 1;
     data.set(await hash(data.subarray(0, -32)), data.length - 32);
     await expect(unpackPayload(data, "Synthetic test password")).rejects.toThrow(AUTH_FAILED);
+  });
+  it("reports a damaged encrypted payload as damaged before asking for a password", async () => {
+    const data = await packPayload(text, "Synthetic test password"); data[60] ^= 1;
+    await expect(inspectPayload(data)).rejects.toThrow(DAMAGED);
   });
   it("rejects modified bodies, truncation, extra bytes and unbounded KDF work", async () => {
     const data = await packPayload(text);

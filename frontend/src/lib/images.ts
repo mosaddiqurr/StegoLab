@@ -56,24 +56,34 @@ export function opaqueSlots(pixels: ImageData): number {
   for (let i = 3; i < pixels.data.length; i += 4) if (pixels.data[i] === 255) slots += 3;
   return slots;
 }
-function* pngPositions(pixels: ImageData): Generator<number> {
-  for (let i = 0; i < pixels.data.length; i += 4) if (pixels.data[i + 3] === 255) { yield i; yield i + 1; yield i + 2; }
+// Walkers return the next writable byte index, or -1 when exhausted. Plain closures are much faster than generators on 16 MP images.
+type Walker = () => number;
+function pngWalker(data: Uint8ClampedArray): Walker {
+  let pixel = -4, channel = 3;
+  return () => {
+    if (channel === 3) {
+      do pixel += 4; while (pixel < data.length && data[pixel + 3] !== 255);
+      if (pixel >= data.length) return -1;
+      channel = 0;
+    }
+    return pixel + channel++;
+  };
 }
 export function pixelCapacity(slots: number): number { return Math.max(0, Math.min(MAX_CONTAINER, Math.floor(slots / 8) - 8)); }
-function writePixels(bytes: Uint8Array | Uint8ClampedArray, positions: Generator<number>, payload: Uint8Array, capacity: number) {
+function writePixels(bytes: Uint8Array | Uint8ClampedArray, next: Walker, payload: Uint8Array, capacity: number) {
   if (payload.length > capacity) fail(CAPACITY);
   const prefix = new Uint8Array(8); prefix.set(FRAME); viewOf(prefix).setUint32(4, payload.length);
   for (const byte of concat(prefix, payload)) for (let bit = 7; bit >= 0; bit--) {
-    const next = positions.next(); if (next.done) fail(CAPACITY);
-    bytes[next.value] = (bytes[next.value] & 254) | ((byte >> bit) & 1);
+    const index = next(); if (index < 0) fail(CAPACITY);
+    bytes[index] = (bytes[index] & 254) | ((byte >> bit) & 1);
   }
 }
-function readPixels(bytes: Uint8Array | Uint8ClampedArray, positions: Generator<number>, capacity: number): Uint8Array {
+function readPixels(bytes: Uint8Array | Uint8ClampedArray, next: Walker, capacity: number): Uint8Array {
   const read = (length: number) => {
     const result = new Uint8Array(length);
     for (let i = 0; i < length; i++) for (let bit = 7; bit >= 0; bit--) {
-      const next = positions.next(); if (next.done) fail(NO_PAYLOAD);
-      result[i] |= (bytes[next.value] & 1) << bit;
+      const index = next(); if (index < 0) fail(NO_PAYLOAD);
+      result[i] |= (bytes[index] & 1) << bit;
     }
     return result;
   };
@@ -83,16 +93,21 @@ function readPixels(bytes: Uint8Array | Uint8ClampedArray, positions: Generator<
   if (!length || length > capacity || length > MAX_CONTAINER) fail(DAMAGED);
   return read(length);
 }
-export async function embedPng(pixels: ImageData, payload: Uint8Array): Promise<Uint8Array> {
+/** Writes a framed payload into the RGB least-significant bits of opaque pixels, returning a modified copy. */
+export function embedPixels(pixels: ImageData, payload: Uint8Array): ImageData {
   const copy = new ImageData(new Uint8ClampedArray(pixels.data), pixels.width, pixels.height);
-  writePixels(copy.data, pngPositions(copy), payload, pixelCapacity(opaqueSlots(copy)));
+  writePixels(copy.data, pngWalker(copy.data), payload, pixelCapacity(opaqueSlots(copy)));
+  return copy;
+}
+export async function embedPng(pixels: ImageData, payload: Uint8Array): Promise<Uint8Array> {
+  const copy = embedPixels(pixels, payload);
   const canvas = document.createElement("canvas"); canvas.width = copy.width; canvas.height = copy.height;
   const context = canvas.getContext("2d"); if (!context) fail("This browser cannot process this image.");
   context.putImageData(copy, 0, 0);
   const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error()), "image/png"));
   return new Uint8Array(await blob.arrayBuffer());
 }
-export function extractPng(pixels: ImageData): Uint8Array { return readPixels(pixels.data, pngPositions(pixels), pixelCapacity(opaqueSlots(pixels))); }
+export function extractPng(pixels: ImageData): Uint8Array { return readPixels(pixels.data, pngWalker(pixels.data), pixelCapacity(opaqueSlots(pixels))); }
 
 export function bmpLayout(data: Uint8Array) {
   if (data.length < 54) fail(DAMAGED);
@@ -103,25 +118,33 @@ export function bmpLayout(data: Uint8Array) {
   if (width <= 0) fail(DAMAGED);
   dimensions(width, height);
   const stride = Math.ceil(width * bpp / 32) * 4;
-  if (view.getUint32(2, true) !== data.length || offset + stride * height > data.length) fail(DAMAGED);
+  // The header's file-size field is often zero or stale, so only the pixel array bounds are trusted.
+  if (offset + stride * height > data.length) fail(DAMAGED);
   return { width, height, offset, stride, bytesPerPixel: bpp / 8 };
 }
-function* bmpPositions(data: Uint8Array): Generator<number> {
+function bmpWalker(data: Uint8Array): Walker {
   const { width, height, offset, stride, bytesPerPixel } = bmpLayout(data);
-  for (let y = 0; y < height; y++) for (let x = 0; x < width; x++) for (let c = 0; c < 3; c++) yield offset + y * stride + x * bytesPerPixel + c;
+  let x = 0, y = 0, channel = 0;
+  return () => {
+    if (y >= height) return -1;
+    const index = offset + y * stride + x * bytesPerPixel + channel;
+    if (++channel === 3) { channel = 0; if (++x === width) { x = 0; y++; } }
+    return index;
+  };
 }
 export function embedBmp(data: Uint8Array, payload: Uint8Array): Uint8Array {
   const layout = bmpLayout(data), copy = new Uint8Array(data);
-  writePixels(copy, bmpPositions(copy), payload, pixelCapacity(layout.width * layout.height * 3));
+  writePixels(copy, bmpWalker(copy), payload, pixelCapacity(layout.width * layout.height * 3));
   return copy;
 }
 export function extractBmp(data: Uint8Array): Uint8Array {
-  const layout = bmpLayout(data); return readPixels(data, bmpPositions(data), pixelCapacity(layout.width * layout.height * 3));
+  const layout = bmpLayout(data); return readPixels(data, bmpWalker(data), pixelCapacity(layout.width * layout.height * 3));
 }
 
 interface JpegSegment { start: number; end: number; marker: number; body: Uint8Array }
 export function jpegParts(data: Uint8Array) {
-  if (data.length < 4 || data[0] !== 255 || data[1] !== 216 || data[data.length - 2] !== 255 || data[data.length - 1] !== 217) fail(DAMAGED);
+  // Bytes after the end-of-image marker (phone gain maps, MPF previews) are allowed and preserved in the scan tail.
+  if (data.length < 4 || data[0] !== 255 || data[1] !== 216) fail(DAMAGED);
   const parts: JpegSegment[] = []; let offset = 2, size: { width: number; height: number } | undefined;
   while (offset < data.length) {
     const start = offset;

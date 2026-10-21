@@ -5,9 +5,10 @@ import App from "./App";
 
 const mount = (route = "/") => render(<MemoryRouter initialEntries={[route]}><App /></MemoryRouter>);
 describe("simple product", () => {
-  it("has exactly the four intended navigation destinations", () => {
+  it("has the intended navigation destinations", () => {
     mount();
-    expect(within(screen.getByRole("navigation", { name: "Primary" })).getAllByRole("link").map(link => link.textContent)).toEqual(["Home", "Embed", "Extract"]);
+    expect(within(screen.getByRole("navigation", { name: "Primary" })).getAllByRole("link").map(link => link.textContent)).toEqual(["Embed", "Extract", "Inspect"]);
+    expect(screen.getByRole("link", { name: "StegoLab home" })).toHaveAttribute("href", "/");
     expect(screen.getByRole("link", { name: "About" })).toHaveAttribute("href", "/about");
     expect(screen.getByRole("link", { name: "Embed data" })).toBeVisible();
     expect(screen.getByRole("link", { name: "Extract data" })).toBeVisible();
@@ -18,6 +19,8 @@ describe("simple product", () => {
     fireEvent.click(screen.getByRole("switch", { name: "Protect with password" }));
     expect(screen.getByLabelText("Password", { exact: true })).toHaveAttribute("type", "password");
     expect(screen.getByLabelText("Confirm password")).toBeVisible();
+    fireEvent.click(screen.getAllByRole("button", { name: "Show characters" })[0]);
+    expect(screen.getByLabelText("Password", { exact: true })).toHaveAttribute("type", "text");
   });
   it("keeps the creator link safe and explains PDF visibility", () => {
     mount("/about");
@@ -27,7 +30,7 @@ describe("simple product", () => {
   });
   it("redirects an unknown route to Home", () => {
     mount("/unknown");
-    expect(screen.getByRole("heading", { name: "StegoLab" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Hide data in plain sight." })).toBeVisible();
   });
 });
 
